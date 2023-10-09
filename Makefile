@@ -4,7 +4,7 @@
 CC ?= gcc
 CFLAGS ?= -std=c11 -ggdb -O3 -fopenmp
 LDFLAGS ?= -fopenmp
-LDLIBS ?= -lgraphblas
+#LDLIBS ?= -lgraphblas
 
 OBJS = GrB-mxm-timer.o cmdline.o generator.o prng.o io.o globals.o
 ifndef TARGET_MWX
