@@ -25,6 +25,10 @@ endif
 all: $(TARGET_EXECUTABLE)
 
 GrB-mxm-timer: $(OBJS)
+
+stats_graph500_bin:
+	${CC} ${CFLAGS} stats_graph500_bin.c -o stats_graph500_bin 
+
 el-generator: $(OBJS_ELGEN)
 
 %.mwx: %

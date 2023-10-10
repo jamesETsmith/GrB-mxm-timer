@@ -2,6 +2,7 @@
 *~
 GrB-mxm-timer
 el-generator
+stats_graph500_bin
 make.inc
 *.cdc
 *.hdd
