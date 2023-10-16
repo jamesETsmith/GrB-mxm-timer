@@ -3,6 +3,7 @@
 GrB-mxm-timer
 el-generator
 stats_graph500_bin
+graph_analyzer
 make.inc
 *.cdc
 *.hdd
@@ -12,3 +13,4 @@ make.inc
 GPATH
 GRTAGS
 GTAGS
+.vscode

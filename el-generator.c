@@ -2,6 +2,7 @@
 #define _POSIX_SOURCE
 #include <assert.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,6 +40,10 @@ int main(int argc, char **argv) {
 
   VERBOSE_PRINT("Starting el-generator\n");
 
+  // update_seeds();
+  int32_t seeds[4];
+  init_prng(seeds);
+
   init_globals(args.scale_arg, args.edgefactor_arg, 255,
                1,  // unused
                args.A_arg, args.B_arg, args.noisefact_arg, args.tree_flag);
@@ -47,9 +52,10 @@ int main(int argc, char **argv) {
 
   if (args.binary_flag) {
     // fwrite(filetag, 1, 8, f);
-    fprintf(
-        f, "--format el64 --num_edges %ld --num_vertices %ld --is_undirected\n",
-        NE, NV);
+    fprintf(f,
+            "--format el64 --num_edges %ld --num_vertices %ld --is_undirected "
+            "--seed0 %ld --seed1 %ld --seed2 %ld --seed3 %ld\n",
+            NE, NV, seeds[0], seeds[1], seeds[2], seeds[3]);
 
   } else if (args.neo4j_flag)
     fprintf(f, ":TYPE,:START_ID,:END_ID\n");

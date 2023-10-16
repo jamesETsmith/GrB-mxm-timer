@@ -147,7 +147,7 @@ int main(int argc, char* argv[]) {
     memcpy(&e.dst, bufferA + 8, sizeof(long));  // add 8 to get second number
     if (e.dst < min_id) min_id = e.dst;
     if (e.dst > max_id) max_id = e.dst;
-    // fprintf(eout, "EDGE,%lu,%lu\n", e.src, e.dst); // binary files start
+    // fprintf(stdout, "EDGE,%lu,%lu\n", e.src, e.dst);  // binary files start
     // edges at 0 instead of 1
 
     vertex_degree[e.src] += 1;
@@ -157,7 +157,7 @@ int main(int argc, char* argv[]) {
   uint64_t max_degree = 0;
   uint64_t n_disconnected = 0;  // i.e. vertices with no edges
   for (size_t i = 0; i < myheader.num_vertices; i++) {
-    vertex_degree[i] /= 2;
+    // vertex_degree[i] /= 2;
     if (vertex_degree[i] > max_degree) {
       max_degree = vertex_degree[i];
     } else if (vertex_degree[i] == 0) {

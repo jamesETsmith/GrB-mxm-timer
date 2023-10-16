@@ -26,8 +26,11 @@ all: $(TARGET_EXECUTABLE)
 
 GrB-mxm-timer: $(OBJS)
 
-stats_graph500_bin:
+stats_graph500_bin: stats_graph500_bin.c
 	${CC} ${CFLAGS} stats_graph500_bin.c -o stats_graph500_bin 
+
+graph_analyzer: graph_analyzer.cpp
+	g++ -std=c++17 -O3 graph_analyzer.cpp -o graph_analyzer
 
 el-generator: $(OBJS_ELGEN)
 
@@ -57,4 +60,4 @@ GrB-mxm-timer.mwx: GrB-mxm-timer
 
 .PHONY: clean
 clean:
-	rm -f GrB-mxm-timer.mwx GrB-mxm-timer $(OBJS)
+	rm -f GrB-mxm-timer.mwx GrB-mxm-timer $(OBJS) el-generator graph_analyzer
