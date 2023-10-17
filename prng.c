@@ -22,14 +22,14 @@ static inline threefry4x32_ctr_t ctr2(int64_t, int64_t);
 static inline float fprng(int64_t, int64_t);
 static inline double dprng(int64_t, int64_t);
 
-void init_prng(int32_t* seeds_copy) {
+void init_prng(uint64_t* seeds_copy) {
   threefry4x32_ctr_t ctr, out;
 
   /* Grab any changed seeds for experimental runs. */
   errno = 0;
 #define GET_SEED(k)                           \
   if (getenv("SEED" #k)) {                    \
-    long t;                                   \
+    uint64_t t;                               \
     t = strtoul(getenv("SEED" #k), NULL, 10); \
     if (t == ULONG_MAX) {                     \
       if (errno) {                            \
@@ -46,7 +46,7 @@ void init_prng(int32_t* seeds_copy) {
   GET_SEED(3);
   for (int i = 0; i < 4; i++) {
     seeds_copy[i] = key.v[i];
-    printf("SEED%d: %ld\n", i, seeds_copy[i]);
+    printf("SEED%d: %lu\n", i, seeds_copy[i]);
   }
 
   /* Initialize scrambling. */

@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
   VERBOSE_PRINT("Starting el-generator\n");
 
   // update_seeds();
-  int32_t seeds[4];
+  uint64_t seeds[4];
   init_prng(seeds);
 
   init_globals(args.scale_arg, args.edgefactor_arg, 255,
@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
     // fwrite(filetag, 1, 8, f);
     fprintf(f,
             "--format el64 --num_edges %ld --num_vertices %ld --is_undirected "
-            "--seed0 %ld --seed1 %ld --seed2 %ld --seed3 %ld\n",
+            "--seed0 %lu --seed1 %lu --seed2 %lu --seed3 %lu\n",
             NE, NV, seeds[0], seeds[1], seeds[2], seeds[3]);
 
   } else if (args.neo4j_flag)

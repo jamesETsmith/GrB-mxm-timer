@@ -1,7 +1,7 @@
 #if !defined(PRNG_HEADER_)
 #define PRNG_HEADER_
 
-void init_prng(int32_t *);
+void init_prng(uint64_t *);
 int64_t scramble(int64_t);
 uint8_t random_weight(int64_t);
 void random_edgevals(float *, int64_t);

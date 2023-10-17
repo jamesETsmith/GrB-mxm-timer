@@ -2,7 +2,7 @@
 
 -include make.inc
 CC ?= gcc
-CFLAGS ?= -std=c11 -ggdb -O3 -fopenmp
+CFLAGS ?= -std=c11 -ggdb -O3 -fopenmp -Wall
 LDFLAGS ?= -fopenmp
 #LDLIBS ?= -lgraphblas
 
@@ -30,7 +30,7 @@ stats_graph500_bin: stats_graph500_bin.c
 	${CC} ${CFLAGS} stats_graph500_bin.c -o stats_graph500_bin 
 
 graph_analyzer: graph_analyzer.cpp
-	g++ -std=c++17 -O3 graph_analyzer.cpp -o graph_analyzer
+	g++ -std=c++17 -O3 -Wall graph_analyzer.cpp -o graph_analyzer -Iexternal
 
 el-generator: $(OBJS_ELGEN)
 
