@@ -30,7 +30,7 @@ stats_graph500_bin: stats_graph500_bin.c
 	${CC} ${CFLAGS} stats_graph500_bin.c -o stats_graph500_bin 
 
 graph_analyzer: graph_analyzer.cpp
-	g++ -std=c++17 -O3 -Wall graph_analyzer.cpp -o graph_analyzer -Iexternal
+	g++ -std=c++17 -g -O3 -Wall graph_analyzer.cpp -o graph_analyzer -Iexternal
 
 el-generator: $(OBJS_ELGEN)
 
