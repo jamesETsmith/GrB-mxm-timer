@@ -147,6 +147,13 @@ edge_list_file_header parse_header(std::ifstream& fs) {
     }
   }
 
+  if (header.num_edges / header.num_vertices != 16) {
+    std::cerr << "\n[WARNING]\n"
+              << "[WARNING] header.num_edges / header.num_vertices != 16"
+              << "\n[WARNING]\n"
+              << std::endl;
+  }
+
   return header;
 }
 
@@ -182,15 +189,16 @@ void verify_graph(std::ifstream& fs, edge_list_file_header const& header,
     if (!fs.read(reinterpret_cast<char*>(&dst), sizeof(long))) {
       break;
     }
-    vertex_degree[src] += 1;
-    n_edges_read += 1;
+    // std::cout << n_edges_read << " " << src << " " << dst << std::endl;
 
     if (src >= header.num_vertices || dst >= header.num_vertices) {
       std::cerr << "[ERROR]: edge index "
-                << "( " << src << ", " << dst << ")"
+                << "(" << src << ", " << dst << ") "
                 << "out of range!" << std::endl;
       exit(EXIT_FAILURE);
     }
+    vertex_degree[src] += 1;
+    n_edges_read += 1;
   }
 
   //
@@ -250,13 +258,13 @@ void verify_graph(std::ifstream& fs, edge_list_file_header const& header,
   //
   // Logging and checks
   //
-  std::cout << "\nPrinting histogram" << std::endl;
-  for (size_t i = 0; i < degree_map.size(); i++) {
+  std::cout << "\nPrinting histogram preview" << std::endl;
+  for (size_t i = 0; i < std::min(16UL, degree_map.size()); i++) {
     std::cout << i << " " << degree_map[i] << std::endl;
   }
 
-  std::cout << "\nHistogram (binned by powers of two)" << std::endl;
-  for (size_t i = 0; i < hist.size(); i++) {
+  std::cout << "\nHistogram (binned by powers of two) preview" << std::endl;
+  for (size_t i = 0; i < std::min(hist.size(), 16UL); i++) {
     std::cout << i << " " << hist[i] << std::endl;
   }
 
