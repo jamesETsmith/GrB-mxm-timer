@@ -9,6 +9,64 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <list>
+#include <algorithm>
+
+/**
+ * sorted_list is a sorted std::list<std::pair<size_t,size_t>> with a fixed size N.
+ * 
+ * inserting elements should take O(log(N)) where the bottleneck is std::lower_bound.
+ * 
+ * sorted_list::insert() gets called N_vertices times so keep N small (e.g. 256)
+ * 
+ */
+template <size_t N>
+struct sorted_list {
+    using T = std::pair<size_t, size_t>;
+    using const_iterator_t = typename std::list<T>::const_iterator;
+    using iterator_t = typename std::list<T>::iterator;
+    using reverse_iterator_t = typename std::list<T>::reverse_iterator;
+
+    std::list<T> data;
+
+    // el = {vertex_degree, index}
+    void insert(T const& el) {
+        auto it = std::lower_bound(data.begin(), data.end(), el);
+        data.insert(it, el);
+        if (data.size() > N) {
+            data.pop_front();
+        }
+    }
+
+    iterator_t begin()  { return data.begin(); }
+    iterator_t end()  { return data.end(); }
+    reverse_iterator_t rbegin()  { return data.rbegin(); }
+    reverse_iterator_t rend()  { return data.rend(); }
+    const_iterator_t cbegin() const { return data.cbegin(); }
+    const_iterator_t cend() const { return data.cend(); }
+    const size_t size() const { return data.size(); }
+
+    // Helper functions to make dumping this info out to JSON easier
+    std::array<size_t, N> get_indices(){
+      std::array<size_t, N> arr;
+      size_t i=0;
+      for (auto el: data){
+        arr[i] = std::get<1>(el);
+        i++;
+      }
+      return arr;
+    }
+
+    std::array<size_t, N> get_degrees(){
+      std::array<size_t, N> arr;
+      size_t i=0;
+      for (auto el: data){
+        arr[i] = std::get<0>(el);
+        i++;
+      }
+      return arr;
+    }
+};
 
 struct edge_list_file_header {
   // Number of vertices in the file
@@ -116,6 +174,7 @@ void verify_graph(std::ifstream& fs, edge_list_file_header const& header,
   //
   // read edges
   //
+  // TODO use mmap for this so we can do it in parallel (and with less memory)
   while (fs) {
     if (!fs.read(reinterpret_cast<char*>(&src), sizeof(long))) {
       break;
@@ -159,8 +218,12 @@ void verify_graph(std::ifstream& fs, edge_list_file_header const& header,
   std::array<size_t, 41> hist;  // Binned by power of two
   hist.fill(0);
 
+  sorted_list<256> largest_degree_vertices;
+
   size_t max_degree = 0;
-  for (auto vd : vertex_degree) {
+  size_t vd;
+  for (size_t i=0; i<vertex_degree.size(); i++) {
+    vd = vertex_degree[i];
     max_degree = std::max(max_degree, vd);
 
     if (vd < degree_map.size()) {
@@ -174,6 +237,9 @@ void verify_graph(std::ifstream& fs, edge_list_file_header const& header,
       size_t bin = std::floor(std::log2l(vd)) + 1;
       hist[bin] += 1;
     }
+
+    // Add to our sorted_list
+    largest_degree_vertices.insert({vd, i});
   }
 
   // Save to json
@@ -215,6 +281,16 @@ void verify_graph(std::ifstream& fs, edge_list_file_header const& header,
 
   std::cout << "Largest degree " << max_degree << std::endl;
 
+  std::cout << "Largest degree vertices:" << std::endl;
+  std::cout << "     Vertex ID    |      Degree    " <<std::endl;
+  std::for_each(largest_degree_vertices.rbegin(), largest_degree_vertices.rend(), [](auto el){
+   printf("%16lu    %16lu\n", std::get<1>(el), std::get<0>(el)); 
+  });
+
+  output_data["largest degree vertices"]["indices"] = largest_degree_vertices.get_indices();
+  output_data["largest degree vertices"]["degree"] = largest_degree_vertices.get_degrees();
+
+  // Write out
   std::ofstream o(output);
   o << std::setw(4) << output_data << std::endl;
 }
