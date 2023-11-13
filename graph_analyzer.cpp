@@ -1,71 +1,73 @@
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <list>
 #include <map>
 #include <nlohmann/json.hpp>
 #include <sstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <list>
-#include <algorithm>
 
 /**
- * sorted_list is a sorted std::list<std::pair<size_t,size_t>> with a fixed size N.
- * 
- * inserting elements should take O(log(N)) where the bottleneck is std::lower_bound.
- * 
+ * sorted_list is a sorted std::list<std::pair<size_t,size_t>> with a fixed size
+ * N.
+ *
+ * inserting elements should take O(log(N)) where the bottleneck is
+ * std::lower_bound.
+ *
  * sorted_list::insert() gets called N_vertices times so keep N small (e.g. 256)
- * 
+ *
  */
 template <size_t N>
 struct sorted_list {
-    using T = std::pair<size_t, size_t>;
-    using const_iterator_t = typename std::list<T>::const_iterator;
-    using iterator_t = typename std::list<T>::iterator;
-    using reverse_iterator_t = typename std::list<T>::reverse_iterator;
+  using T = std::pair<size_t, size_t>;
+  using const_iterator_t = typename std::list<T>::const_iterator;
+  using iterator_t = typename std::list<T>::iterator;
+  using reverse_iterator_t = typename std::list<T>::reverse_iterator;
 
-    std::list<T> data;
+  std::list<T> data;
 
-    // el = {vertex_degree, index}
-    void insert(T const& el) {
-        auto it = std::lower_bound(data.begin(), data.end(), el);
-        data.insert(it, el);
-        if (data.size() > N) {
-            data.pop_front();
-        }
+  // el = {vertex_degree, index}
+  void insert(T const& el) {
+    auto it = std::lower_bound(data.begin(), data.end(), el);
+    data.insert(it, el);
+    if (data.size() > N) {
+      data.pop_front();
     }
+  }
 
-    iterator_t begin()  { return data.begin(); }
-    iterator_t end()  { return data.end(); }
-    reverse_iterator_t rbegin()  { return data.rbegin(); }
-    reverse_iterator_t rend()  { return data.rend(); }
-    const_iterator_t cbegin() const { return data.cbegin(); }
-    const_iterator_t cend() const { return data.cend(); }
-    const size_t size() const { return data.size(); }
+  iterator_t begin() { return data.begin(); }
+  iterator_t end() { return data.end(); }
+  reverse_iterator_t rbegin() { return data.rbegin(); }
+  reverse_iterator_t rend() { return data.rend(); }
+  const_iterator_t cbegin() const { return data.cbegin(); }
+  const_iterator_t cend() const { return data.cend(); }
+  const size_t size() const { return data.size(); }
 
-    // Helper functions to make dumping this info out to JSON easier
-    std::array<size_t, N> get_indices(){
-      std::array<size_t, N> arr;
-      size_t i=0;
-      for (auto el: data){
-        arr[i] = std::get<1>(el);
-        i++;
-      }
-      return arr;
+  // Helper functions to make dumping this info out to JSON easier
+  std::array<size_t, N> get_indices() {
+    std::array<size_t, N> arr;
+    size_t i = 0;
+    for (auto el : data) {
+      arr[i] = std::get<1>(el);
+      i++;
     }
+    return arr;
+  }
 
-    std::array<size_t, N> get_degrees(){
-      std::array<size_t, N> arr;
-      size_t i=0;
-      for (auto el: data){
-        arr[i] = std::get<0>(el);
-        i++;
-      }
-      return arr;
+  std::array<size_t, N> get_degrees() {
+    std::array<size_t, N> arr;
+    size_t i = 0;
+    for (auto el : data) {
+      arr[i] = std::get<0>(el);
+      i++;
     }
+    return arr;
+  }
 };
 
 struct edge_list_file_header {
@@ -197,6 +199,7 @@ void verify_graph(std::ifstream& fs, edge_list_file_header const& header,
                 << "out of range!" << std::endl;
       exit(EXIT_FAILURE);
     }
+
     vertex_degree[src] += 1;
     n_edges_read += 1;
   }
@@ -213,8 +216,9 @@ void verify_graph(std::ifstream& fs, edge_list_file_header const& header,
   //
   //
   //
-  std::array<size_t, 33> degree_map;
-  degree_map.fill(0);
+  // std::array<size_t, 33> degree_map;
+  // degree_map.fill(0);
+  std::vector<size_t> degree_map(33, 0);
 
   /*
    * Index 0 is special case of unconnected edges
@@ -223,31 +227,44 @@ void verify_graph(std::ifstream& fs, edge_list_file_header const& header,
    * Index 3 is [2^2, 2^3) i.e. degree ∈ [4,5,6,7]
    * Index N is [2^(N-1), 2^N)
    */
-  std::array<size_t, 41> hist;  // Binned by power of two
-  hist.fill(0);
+  // std::array<size_t, 41> hist;  // Binned by power of two
+  // hist.fill(0);
+  std::vector<size_t> hist(41, 0);
 
   sorted_list<256> largest_degree_vertices;
 
   size_t max_degree = 0;
-  size_t vd;
-  for (size_t i=0; i<vertex_degree.size(); i++) {
-    vd = vertex_degree[i];
+  // ;
+
+#pragma omp declare reduction(                                  \
+        vec_size_t_plus : std::vector<size_t> : std::transform( \
+                omp_out.begin(), omp_out.end(), omp_in.begin(), \
+                    omp_out.begin(), std::plus<size_t>()))      \
+    initializer(omp_priv = decltype(omp_orig)(omp_orig.size()))
+
+#pragma omp parallel for schedule(static, 32) reduction(max : max_degree) \
+    reduction(vec_size_t_plus : degree_map) reduction(vec_size_t_plus : hist)
+  for (size_t i = 0; i < vertex_degree.size(); i++) {
+    size_t vd = vertex_degree[i];
     max_degree = std::max(max_degree, vd);
 
     if (vd < degree_map.size()) {
-      degree_map[vd] += 1;
+      // #pragma omp atomic update
+      degree_map[vd]++;
     }
 
     // Add to binned histogram
     if (vd == 0) {
-      hist[0] += 1;
+      // #pragma omp atomic update
+      hist[0]++;
     } else {
       size_t bin = std::floor(std::log2l(vd)) + 1;
-      hist[bin] += 1;
+      // #pragma omp atomic update
+      hist[bin]++;
     }
 
     // Add to our sorted_list
-    largest_degree_vertices.insert({vd, i});
+    // largest_degree_vertices.insert({vd, i});
   }
 
   // Save to json
@@ -290,13 +307,16 @@ void verify_graph(std::ifstream& fs, edge_list_file_header const& header,
   std::cout << "Largest degree " << max_degree << std::endl;
 
   std::cout << "Largest degree vertices:" << std::endl;
-  std::cout << "     Vertex ID    |      Degree    " <<std::endl;
-  std::for_each(largest_degree_vertices.rbegin(), largest_degree_vertices.rend(), [](auto el){
-   printf("%16lu    %16lu\n", std::get<1>(el), std::get<0>(el)); 
-  });
+  std::cout << "     Vertex ID    |      Degree    " << std::endl;
+  std::for_each(largest_degree_vertices.rbegin(),
+                largest_degree_vertices.rend(), [](auto el) {
+                  printf("%16lu    %16lu\n", std::get<1>(el), std::get<0>(el));
+                });
 
-  output_data["largest degree vertices"]["indices"] = largest_degree_vertices.get_indices();
-  output_data["largest degree vertices"]["degree"] = largest_degree_vertices.get_degrees();
+  output_data["largest degree vertices"]["indices"] =
+      largest_degree_vertices.get_indices();
+  output_data["largest degree vertices"]["degree"] =
+      largest_degree_vertices.get_degrees();
 
   // Write out
   std::ofstream o(output);
