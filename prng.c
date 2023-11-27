@@ -17,13 +17,13 @@
 threefry4x32_key_t key = {{0xdeadbeef, 0xdecea5ed, 0x0badcafe, 0x5ca1ab1e}};
 static uint64_t scramble0, scramble1;
 static inline uint64_t bitreverse(uint64_t);
-static inline threefry4x32_ctr_t ctr1(int64_t);
+// static inline threefry4x32_ctr_t ctr1(int64_t);
 static inline threefry4x32_ctr_t ctr2(int64_t, int64_t);
 static inline float fprng(int64_t, int64_t);
 static inline double dprng(int64_t, int64_t);
 
 void init_prng(uint64_t* seeds_copy) {
-  threefry4x32_ctr_t ctr, out;
+  // threefry4x32_ctr_t ctr, out;
 
   /* Grab any changed seeds for experimental runs. */
   errno = 0;
@@ -141,13 +141,13 @@ int32_t prng_check(void) {
 
 /* Helper routines. */
 
-threefry4x32_ctr_t ctr1(int64_t k) {
-  threefry4x32_ctr_t ctr;
-  ctr.v[0] = ((uint64_t)k) >> 32;
-  ctr.v[1] = ((uint64_t)k) & 0xFFFFFFFFul;
-  ctr.v[2] = ctr.v[3] = 0;
-  return ctr;
-}
+// threefry4x32_ctr_t ctr1(int64_t k) {
+//   threefry4x32_ctr_t ctr;
+//   ctr.v[0] = ((uint64_t)k) >> 32;
+//   ctr.v[1] = ((uint64_t)k) & 0xFFFFFFFFul;
+//   ctr.v[2] = ctr.v[3] = 0;
+//   return ctr;
+// }
 
 threefry4x32_ctr_t ctr2(int64_t k1, int64_t k2) {
   threefry4x32_ctr_t ctr;
